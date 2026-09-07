@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { YoutubeTranscript } from 'youtube-transcript';
+import { getSubtitles } from 'youtube-captions-scraper';
 import { translate } from '@vitalets/google-translate-api';
 
 dotenv.config();
@@ -29,8 +29,14 @@ const langMap = {
   'Portugués': 'pt'
 };
 
-function formatTimestamp(rawOffset) {
-  const totalSeconds = rawOffset > 1000 ? Math.floor(rawOffset / 1000) : Math.floor(rawOffset);
+function extractVideoId(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function formatTimestamp(rawStart) {
+  const totalSeconds = Math.floor(rawStart);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `(${minutes}:${seconds < 10 ? '0' : ''}${seconds})`;
@@ -43,17 +49,20 @@ app.post('/api/translate-video', async (req, res) => {
     return res.status(400).json({ success: false, error: 'La URL del video es obligatoria.' });
   }
 
+  const videoId = extractVideoId(videoUrl);
+  if (!videoId) {
+    return res.status(400).json({ success: false, error: 'URL de YouTube no válida.' });
+  }
+
   try {
-    // Petición con cabeceras de navegador para evitar bloqueos en la nube
-    const transcriptItems = await YoutubeTranscript.fetchTranscript(videoUrl, {
-      lang: 'es',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+    // Obtener subtítulos usando captions-scraper adaptado para la nube
+    const transcriptItems = await getSubtitles({
+      videoID: videoId,
+      lang: 'en' // Intenta traer los subtítulos base o automáticos disponibles
     });
 
     if (!transcriptItems || transcriptItems.length === 0) {
-      return res.status(404).json({ success: false, error: 'El video no contiene subtítulos disponibles.' });
+      return res.status(404).json({ success: false, error: 'El video no contiene subtítulos accesibles.' });
     }
 
     // Agrupar de 8 en 8 líneas
@@ -63,7 +72,7 @@ app.post('/api/translate-video', async (req, res) => {
     for (let i = 0; i < transcriptItems.length; i += CHUNK_SIZE) {
       const chunk = transcriptItems.slice(i, i + CHUNK_SIZE);
       const textBlock = chunk.map(item => item.text.trim()).join(' ');
-      const startOffset = chunk[0].offset || chunk[0].start || 0;
+      const startOffset = parseFloat(chunk[0].start) || 0;
 
       groupedParagraphs.push({
         offset: startOffset,
@@ -90,10 +99,10 @@ app.post('/api/translate-video', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error de transcripción:', error.message);
+    console.error('❌ Error de subtítulos:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'No se pudo obtener la transcripción de este video. Asegúrate de que tenga subtítulos habilitados.'
+      error: 'No se pudieron extraer los subtítulos de este video en la nube. Prueba con otro enlace.'
     });
   }
 });
