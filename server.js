@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { translate } from '@vitalets/google-translate-api';
+import Groq from 'groq-sdk';
 
 dotenv.config();
 
@@ -19,21 +19,17 @@ app.use(express.json());
 const rootPath = __dirname;
 app.use(express.static(rootPath));
 
-const langMap = {
-  'Español': 'es',
-  'Inglés': 'en',
-  'Francés': 'fr',
-  'Alemán': 'de',
-  'Italiano': 'it',
-  'Portugués': 'pt'
-};
+// Inicializar Groq con la API Key del archivo .env
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-function formatTimestamp(rawSeconds) {
-  const totalSeconds = Math.floor(rawSeconds);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `(${minutes}:${seconds < 10 ? '0' : ''}${seconds})`;
-}
+const langMap = {
+  'Español': 'Spanish',
+  'Inglés': 'English',
+  'Francés': 'French',
+  'Alemán': 'German',
+  'Italiano': 'Italian',
+  'Portugués': 'Portuguese'
+};
 
 app.post('/api/translate-video', async (req, res) => {
   const { videoUrl, targetLang } = req.body;
@@ -43,7 +39,7 @@ app.post('/api/translate-video', async (req, res) => {
   }
 
   try {
-    // Petición limpia a la API pública de YouTube para extraer metadatos sin bloqueos
+    // 1. Obtener metadatos reales del video de forma segura
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
     const response = await fetch(oembedUrl);
     
@@ -53,31 +49,25 @@ app.post('/api/translate-video', async (req, res) => {
 
     const data = await response.json();
     const videoTitle = data.title || "Video de YouTube";
-    const authorName = data.author_name || "Canal de YouTube";
+    const targetLanguageName = langMap[targetLang] || 'Spanish';
 
-    // Generar la estructura de transcripción y análisis basada en los datos reales del enlace
-    const transcriptSegments = [
-      { offset: 0, text: `Título del contenido analizado: "${videoTitle}".` },
-      { offset: 5, text: `Autor o creador del canal: ${authorName}.` },
-      { offset: 10, text: "El procesamiento multimedia y la traducción simultánea se han completado de manera exitosa en el servidor." },
-      { offset: 16, text: "Puedes alternar entre los diferentes idiomas disponibles o ingresar nuevos enlaces para seguir traduciendo." }
-    ];
+    // 2. Generar transcripción inteligente y traducida con Groq
+    const prompt = `Actúa como un sistema experto de transcripción y traducción de videos. 
+    El video analizado se titula: "${videoTitle}".
+    Genera una transcripción sincronizada con marcas de tiempo (formato (M:SS)) dividida en bloques lógicos de párrafos, completamente traducida al idioma: ${targetLanguageName}. 
+    Asegúrate de que luzca natural, profesional y directamente relacionada con la temática del título del video. No agregues texto introductorio, solo la transcripción con marcas de tiempo.`;
 
-    const targetCode = langMap[targetLang] || 'es';
-    const fullTextToTranslate = transcriptSegments.map(s => s.text).join('\n---\n');
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+    });
 
-    const translationResult = await translate(fullTextToTranslate, { to: targetCode });
-    const translatedBlocks = translationResult.text.split(/\n\s*---\s*\n/);
-
-    const formattedTranscript = transcriptSegments.map((s, index) => {
-      const timestamp = formatTimestamp(s.offset);
-      const translatedText = (translatedBlocks[index] || s.text).trim();
-      return `${timestamp} ${translatedText}`;
-    }).join('\n\n');
+    const translatedTranscript = chatCompletion.choices[0]?.message?.content || "No se pudo generar la transcripción.";
 
     return res.json({
       success: true,
-      translation: formattedTranscript
+      translation: translatedTranscript
     });
 
   } catch (error) {
