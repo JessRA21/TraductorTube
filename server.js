@@ -63,7 +63,7 @@ app.post('/api/translate-video', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-70b-8192', // Modelo clásico y universal de Groq
+        model: 'llama-3.1-70b-versatile', // Modelo activo y vigente actual
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3
       })
