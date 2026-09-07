@@ -63,7 +63,7 @@ app.post('/api/translate-video', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile', // Modelo vigente y activo
+        model: 'llama-3.1-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3
       })
@@ -95,11 +95,6 @@ app.post('/api/translate-video', async (req, res) => {
   }
 });
 
-app.get('/', (res, res) => { // Pequeña corrección de sintaxis por si acaso
-  res.sendFile(path.join(rootPath, 'index.html'));
-});
-
-// Asegurándonos de que los parámetros de app.get estén bien limpios
 app.get('/', (req, res) => {
   res.sendFile(path.join(rootPath, 'index.html'));
 });
