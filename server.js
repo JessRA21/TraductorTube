@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// CORREGIDO: Apunta a la misma carpeta actual para evitar errores en la nube
+// Carpeta raíz para archivos estáticos
 const rootPath = __dirname;
 app.use(express.static(rootPath));
 
@@ -100,6 +100,7 @@ app.post('/api/translate-video', async (req, res) => {
   }
 });
 
+// Ruta raíz explícita para servir el index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(rootPath, 'index.html'));
 });
