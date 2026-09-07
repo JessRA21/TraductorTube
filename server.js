@@ -63,7 +63,7 @@ app.post('/api/translate-video', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gemma2-9b-it',
+        model: 'llama-3.1-8b-instant', // Modelo ultrarrápido y vigente de Groq
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3
       })
