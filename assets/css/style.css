@@ -1,0 +1,325 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --btn-dark-blue: #1e293b;
+  --primary-hover-blue: #1d3c80;
+  --primary-active-blue: #1d3c80;
+  
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  --card-bg: #ffffff;
+  --text-primary: #1e293b;
+  --text-muted: #64748b;
+  --border-radius: 20px;
+  --shadow-soft: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-gradient);
+  min-height: 100vh;
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+/* Encabezado */
+.header-title {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 2.5rem;
+}
+
+.header-subtitle {
+  color: #94a3b8;
+  font-size: 1.05rem;
+}
+
+/* Margen del grupo del título */
+.text-center.mb-5 {
+  margin-bottom: 3.5rem !important;
+}
+
+/* Tarjeta Principal */
+.main-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(10px);
+  margin-top: 1.5rem;
+}
+
+.main-card .card-body {
+  padding: 3rem 3.5rem !important;
+}
+
+/* Inputs y Selects */
+.form-label {
+  color: #334155;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.form-control, .form-select {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-hover-blue);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+/* Previsualización del Video */
+.video-preview-wrapper {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-top: 1.25rem;
+  margin-bottom: 2rem !important;
+}
+
+/* =========================================================
+   Botón Principal: Obtener y traducir transcripción
+   ========================================================= */
+#translateBtn,
+.btn-submit,
+.btn-primary {
+  background-color: var(--btn-dark-blue) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  padding: 0.95rem 1.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  transition: all 0.25s ease-in-out !important;
+  color: #ffffff !important;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+#translateBtn:hover,
+.btn-submit:hover,
+.btn-primary:hover {
+  background-color: var(--primary-hover-blue) !important;
+  color: #ffffff !important;
+  border-color: var(--primary-hover-blue) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4) !important;
+}
+
+#translateBtn:active,
+.btn-submit:active,
+.btn-primary:active {
+  background-color: var(--primary-active-blue) !important;
+  transform: translateY(0);
+}
+
+/* Header Superior Transparente Sin Línea */
+.app-header {
+  background: transparent;
+  border: none;
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+.app-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Botón de Exportar */
+.btn-export-dropdown {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 0.55rem 1.15rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.btn-export-dropdown:hover,
+.btn-export-dropdown:focus {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Menú Desplegable */
+.dropdown-menu {
+  background-color: #ffffff;
+  border-radius: 12px;
+  min-width: 240px;
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #334155;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f1f5f9;
+}
+
+/* =========================================================
+   Ajustes de la Sección de Resultado y Botón Copiar
+   ========================================================= */
+
+#translationResult {
+  margin-top: 2.25rem;
+}
+
+#translationResult .d-flex {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100%;
+  margin-bottom: 1rem !important;
+  padding: 0 !important;
+  height: auto !important;
+}
+
+/* Botón Copiar */
+#btnCopy,
+.btn-copy {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 36px !important;
+  padding: 0.25rem 1rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  border-radius: 50rem !important;
+  background-color: var(--btn-dark-blue) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  transition: all 0.25s ease-in-out !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  width: auto !important;
+  margin: 0 !important;
+}
+
+#btnCopy:hover,
+.btn-copy:hover {
+  background-color: var(--primary-hover-blue) !important;
+  color: #ffffff !important;
+  border-color: var(--primary-hover-blue) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+}
+
+#btnCopy:active,
+.btn-copy:active {
+  background-color: var(--primary-active-blue) !important;
+  transform: translateY(0);
+}
+
+/* Caja contenedora del texto traducido */
+#translationText,
+.transcription-box {
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.25rem 1.5rem !important;
+  color: #334155 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  white-space: pre-wrap !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* =========================================================
+   Ajuste del Footer: Espaciado compacto y moderado
+   ========================================================= */
+footer.footer-elegante,
+footer {
+  margin-top: -1.75rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 1rem !important;
+  text-align: center;
+}
+
+/* =========================================================
+   Media Queries para Responsividad (Dispositivos Móviles)
+   ========================================================= */
+@media (max-width: 992px) {
+  .main-card .card-body {
+    padding: 2.25rem 2rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-title {
+    font-size: 1.85rem;
+  }
+  
+  .header-subtitle {
+    font-size: 0.95rem;
+    padding: 0 1rem;
+  }
+
+  .text-center.mb-5 {
+    margin-bottom: 2rem !important;
+  }
+
+  .main-card {
+    border-radius: 16px;
+    margin-top: 1rem;
+  }
+
+  .main-card .card-body {
+    padding: 1.5rem 1.25rem !important;
+  }
+
+  .app-header .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .btn-export-dropdown {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 576px) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .main-card .card-body {
+    padding: 1.25rem 1rem !important;
+  }
+
+  #translationResult .d-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  #btnCopy,
+  .btn-copy {
+    width: 100% !important;
+    border-radius: 10px !important;
+  }
+}
