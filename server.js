@@ -35,22 +35,20 @@ app.post('/api/translate-video', async (req, res) => {
   }
 
   try {
-    // 1. Obtener metadatos reales del video de YouTube de forma segura
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
     const response = await fetch(oembedUrl);
     
     if (!response.ok) {
-      return res.status(404).json({ success: false, error: 'No se pudo encontrar el video de YouTube especificado.' });
+      return res.status(404).json({ success: false, error: 'No se pudo encontrar el video de YouTube.' });
     }
 
     const data = await response.json();
     const videoTitle = data.title || "Video de YouTube";
     const targetLanguageName = langMap[targetLang] || 'Spanish';
 
-    // 2. Consultar directamente a la API de Groq usando fetch nativo
-    const groqApiKey = process.env.GROQ_API_KEY;
+    const groqApiKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
     if (!groqApiKey) {
-      return res.status(500).json({ success: false, error: 'Falta configurar GROQ_API_KEY en las variables de entorno de Render.' });
+      return res.status(500).json({ success: false, error: 'Falta configurar GROQ_API_KEY en Render.' });
     }
 
     const prompt = `Actúa como un sistema experto de transcripción y traducción de videos. 
@@ -65,7 +63,7 @@ app.post('/api/translate-video', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant', // Usamos un modelo ultra-compatible
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3
       })
@@ -74,8 +72,11 @@ app.post('/api/translate-video', async (req, res) => {
     const groqData = await groqResponse.json();
 
     if (!groqResponse.ok) {
-      console.error('❌ Error de Groq API:', groqData);
-      return res.status(500).json({ success: false, error: 'Error al comunicarse con el modelo de inteligencia artificial.' });
+      console.error('❌ Detalle del error de Groq:', JSON.stringify(groqData));
+      return res.status(500).json({ 
+        success: false, 
+        error: `Error de Groq: ${groqData.error?.message || 'Revisa tu API Key'}` 
+      });
     }
 
     const translatedTranscript = groqData.choices[0]?.message?.content || "No se pudo generar la transcripción.";
