@@ -3,7 +3,6 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import Groq from 'groq-sdk';
 
 dotenv.config();
 
@@ -18,9 +17,6 @@ app.use(express.json());
 
 const rootPath = __dirname;
 app.use(express.static(rootPath));
-
-// Inicializar Groq con la API Key del archivo .env
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const langMap = {
   'Español': 'Spanish',
@@ -39,7 +35,7 @@ app.post('/api/translate-video', async (req, res) => {
   }
 
   try {
-    // 1. Obtener metadatos reales del video de forma segura
+    // 1. Obtener metadatos reales del video de YouTube de forma segura
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
     const response = await fetch(oembedUrl);
     
@@ -51,19 +47,38 @@ app.post('/api/translate-video', async (req, res) => {
     const videoTitle = data.title || "Video de YouTube";
     const targetLanguageName = langMap[targetLang] || 'Spanish';
 
-    // 2. Generar transcripción inteligente y traducida con Groq
+    // 2. Consultar directamente a la API de Groq usando fetch nativo
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (!groqApiKey) {
+      return res.status(500).json({ success: false, error: 'Falta configurar GROQ_API_KEY en las variables de entorno de Render.' });
+    }
+
     const prompt = `Actúa como un sistema experto de transcripción y traducción de videos. 
     El video analizado se titula: "${videoTitle}".
     Genera una transcripción sincronizada con marcas de tiempo (formato (M:SS)) dividida en bloques lógicos de párrafos, completamente traducida al idioma: ${targetLanguageName}. 
     Asegúrate de que luzca natural, profesional y directamente relacionada con la temática del título del video. No agregues texto introductorio, solo la transcripción con marcas de tiempo.`;
 
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.3,
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3
+      })
     });
 
-    const translatedTranscript = chatCompletion.choices[0]?.message?.content || "No se pudo generar la transcripción.";
+    const groqData = await groqResponse.json();
+
+    if (!groqResponse.ok) {
+      console.error('❌ Error de Groq API:', groqData);
+      return res.status(500).json({ success: false, error: 'Error al comunicarse con el modelo de inteligencia artificial.' });
+    }
+
+    const translatedTranscript = groqData.choices[0]?.message?.content || "No se pudo generar la transcripción.";
 
     return res.json({
       success: true,
