@@ -17,7 +17,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const rootPath = path.join(__dirname, '../../');
+// CORREGIDO: Apunta a la misma carpeta actual para evitar errores en la nube
+const rootPath = __dirname;
 app.use(express.static(rootPath));
 
 const langMap = {
@@ -56,7 +57,7 @@ app.post('/api/translate-video', async (req, res) => {
       return res.status(404).json({ success: false, error: 'El video no contiene subtítulos.' });
     }
 
-    // 2. Agrupar de 8 en 8 líneas (bloques más grandes = menos carga y respuesta inmediata)
+    // 2. Agrupar de 8 en 8 líneas
     const CHUNK_SIZE = 8;
     const groupedParagraphs = [];
 
