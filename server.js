@@ -63,7 +63,7 @@ app.post('/api/translate-video', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant', // El modelo correcto y vigente con tu nueva API key
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3
       })
