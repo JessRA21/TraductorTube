@@ -46,11 +46,6 @@ app.post('/api/translate-video', async (req, res) => {
     const videoTitle = data.title || "Video de YouTube";
     const targetLanguageName = langMap[targetLang] || 'Spanish';
 
-    const groqApiKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
-    if (!groqApiKey) {
-      return res.status(500).json({ success: false, error: 'Falta configurar GROQ_API_KEY en Render.' });
-    }
-
     const prompt = `Actúa como un sistema experto de transcripción y traducción de videos. 
     El video analizado se titula: "${videoTitle}".
     Genera una transcripción sincronizada con marcas de tiempo (formato (M:SS)) dividida en bloques lógicos de párrafos, completamente traducida al idioma: ${targetLanguageName}. 
@@ -59,11 +54,11 @@ app.post('/api/translate-video', async (req, res) => {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', // El modelo estándar universal de Groq
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3
       })
@@ -75,7 +70,7 @@ app.post('/api/translate-video', async (req, res) => {
       console.error('❌ Detalle del error de Groq:', JSON.stringify(groqData));
       return res.status(500).json({ 
         success: false, 
-        error: `Error de Groq: ${groqData.error?.message || 'Revisa tu API Key'}` 
+        error: `Error de Groq: ${groqData.error?.message || 'Revisa tu configuración'}` 
       });
     }
 
