@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import ytDlp from 'yt-dlp-exec';
+import { YoutubeTranscript } from 'youtube-transcript';
 import { translate } from '@vitalets/google-translate-api';
 
 dotenv.config();
@@ -29,8 +29,8 @@ const langMap = {
   'Portugués': 'pt'
 };
 
-function formatTimestamp(rawSeconds) {
-  const totalSeconds = Math.floor(rawSeconds);
+function formatTimestamp(rawOffset) {
+  const totalSeconds = rawOffset > 1000 ? Math.floor(rawOffset / 1000) : Math.floor(rawOffset);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `(${minutes}:${seconds < 10 ? '0' : ''}${seconds})`;
@@ -44,52 +44,34 @@ app.post('/api/translate-video', async (req, res) => {
   }
 
   try {
-    // Extraer metadatos y subtítulos automáticos usando yt-dlp de forma segura
-    const output = await ytDlp(videoUrl, {
-      dumpJson: true,
-      skipDownload: true,
-      writeSub: true,
-      writeAutoSub: true
+    // Petición con cabeceras de navegador para evitar bloqueos en la nube
+    const transcriptItems = await YoutubeTranscript.fetchTranscript(videoUrl, {
+      lang: 'es',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
     });
 
-    // Intentar extraer subtítulos o descripciones si la API directa responde
-    // Como respaldo limpio, si yt-dlp nos da la info, armamos los bloques
-    let transcriptItems = [];
-
-    // Si el video tiene subtítulos estructurados en el json de yt-dlp
-    if (output.automatic_captions || output.subtitles) {
-      // Tomamos el idioma disponible o generamos un bloque simulado con la descripción/metadatos si es necesario
+    if (!transcriptItems || transcriptItems.length === 0) {
+      return res.status(404).json({ success: false, error: 'El video no contiene subtítulos disponibles.' });
     }
 
-    // Para garantizar que funcione fluidamente con la lógica que construimos:
-    // Haremos una petición alternativa limpia o usaremos los datos de yt-dlp
-    // Si prefieres usar subtítulos web directos mediante un parser seguro:
-    const response = await fetch(`https://noembed.com/embed?url=${videoUrl}`);
-    const data = await response.json();
-    
-    if (!data.title) {
-      return res.status(404).json({ success: false, error: 'No se pudo procesar el video de YouTube.' });
-    }
-
-    // Bloque de prueba funcional para asegurar que la app traduzca y devuelva contenido en la nube
-    const simulatedTranscript = [
-      { offset: 0, text: `Transcripción automatizada para el video: ${data.title}.` },
-      { offset: 5, text: "Este servicio en la nube se ha conectado exitosamente a tu aplicación." },
-      { offset: 10, text: "La plataforma está lista para procesar y traducir los bloques de texto seleccionados." }
-    ];
-
+    // Agrupar de 8 en 8 líneas
     const CHUNK_SIZE = 8;
     const groupedParagraphs = [];
 
-    for (let i = 0; i < simulatedTranscript.length; i += CHUNK_SIZE) {
-      const chunk = simulatedTranscript.slice(i, i + CHUNK_SIZE);
+    for (let i = 0; i < transcriptItems.length; i += CHUNK_SIZE) {
+      const chunk = transcriptItems.slice(i, i + CHUNK_SIZE);
       const textBlock = chunk.map(item => item.text.trim()).join(' ');
+      const startOffset = chunk[0].offset || chunk[0].start || 0;
+
       groupedParagraphs.push({
-        offset: chunk[0].offset,
+        offset: startOffset,
         text: textBlock
       });
     }
 
+    // Traducir bloques
     const targetCode = langMap[targetLang] || 'es';
     const fullTextToTranslate = groupedParagraphs.map(p => p.text).join('\n---\n');
 
@@ -108,10 +90,10 @@ app.post('/api/translate-video', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error detallado:', error);
+    console.error('❌ Error de transcripción:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'YouTube limitó la conexión desde este servidor en la nube. Prueba con otro enlace o video.'
+      error: 'No se pudo obtener la transcripción de este video. Asegúrate de que tenga subtítulos habilitados.'
     });
   }
 });
